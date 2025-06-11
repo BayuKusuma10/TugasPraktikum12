@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AR Falcon</title>
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <script src="https://raw.githack.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/studio-backend/master/src/modules/marker/tools/gesture-detector.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/studio-backend/master/src/modules/marker/tools/gesture-handler.js"></script>
+</head>
+<body style="margin: 0; overflow: hidden;">
+  <a-scene embedded arjs gesture-detector>
+    <a-assets>
+      <a-asset-item id="modelnya" src="assets/falcon.glb"></a-asset-item>
+      <audio id="music" src="assets/an-eagle-squawking-overhead-226774.mp3" preload="auto"></audio>
+    </a-assets>
+
+    <a-marker type="pattern" url="assets/pattern-falcon.patt" id="marker">
+      <a-entity
+        id="falcon"
+        position="0 0.5 0"
+        scale="11 15 11"
+        gltf-model="#modelnya"
+        animation-mixer="loop: repeat"
+        gesture-handler
+        animation="property: rotation; to: 0 360 0; dur: 6500; easing: linear; loop: true"
+      ></a-entity>
+      <a-sound id="falconSound" src="#music" autoplay="false" loop="true"></a-sound>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    const marker = document.querySelector('#marker');
+    const soundEntity = document.querySelector('#falconSound');
+    const falconModel = document.getElementById('falcon');
+
+    marker.addEventListener('markerFound', () => {
+      // Mainkan suara
+      if (soundEntity && soundEntity.components.sound) {
+        soundEntity.components.sound.playSound();
+      }
+
+      // Tunggu sampai model benar-benar termuat
+      if (falconModel && falconModel.getObject3D('mesh')) {
+        const mesh = falconModel.getObject3D('mesh');
+        mesh.geometry.computeBoundingBox();
+        const bbox = mesh.geometry.boundingBox;
+
+        const modelWidth = bbox.max.x - bbox.min.x;
+        const modelHeight = bbox.max.y - bbox.min.y;
+        const aspectRatio = modelWidth / modelHeight;
+
+        // Anda bisa menentukan nilai skala dasar sesuai kebutuhan
+        const baseScale = 5;
+        const scaleX = baseScale * aspectRatio;
+        const scaleY = baseScale;
+        const scaleZ = baseScale * aspectRatio;
+
+        falconModel.setAttribute('scale', { x: scaleX, y: scaleY, z: scaleZ });
+      }
+    });
+
+    marker.addEventListener('markerLost', () => {
+      if (soundEntity && soundEntity.components.sound) {
+        soundEntity.components.sound.stopSound();
+      }
+    });
+  </script>
+</body>
+</html>
